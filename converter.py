@@ -1,3 +1,6 @@
+"""
+Simple "to aac" converter
+"""
 import os
 from subprocess import *
 
