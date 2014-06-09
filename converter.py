@@ -38,7 +38,8 @@ def ProcessFolder(inputDirectory, outputDirectory):
     dirFileList = os.listdir(inputDirectory)
 
     # 0 - filename, 1 - extension
-    procFileList = list(filter (lambda fileName: path.splitext(fileName)[1] in processFileTypes, dirFileList))
+    procFileList = list(filter (lambda fileName: 
+        os.path.splitext(fileName)[1] in processFileTypes, dirFileList))
 
 
     # transcode  to WAV (ffmpeg) and encode to AAC (fhgaacenc)
