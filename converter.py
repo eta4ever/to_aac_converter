@@ -9,26 +9,30 @@ from tkinter import *
 from tkinter.ttk import * # better gui
 from tkinter import filedialog
 
-# global vars for folders, program root default
-inputRoot = os.getcwd()
-outputRoot = os.getcwd()
+# global constants for folders, program root default
+INPUTROOT = os.getcwd()
+OUTPUTROOT = os.getcwd()
 
 # AAC encoder keys
-aacParams = '--cbr 512 --profile lc'
+AACPARAMS = '--cbr 512 --profile lc'
 
 # external tools paths %prog/tools/
-ffmpegPath = os.path.join(os.getcwd(), 'tools', 'ffmpeg.exe')
-fhgaacencPath = os.path.join(os.getcwd(), 'tools', 'fhgaacenc.exe')
+FFMPEGPATH = os.path.join(os.getcwd(), 'tools', 'ffmpeg.exe')
+FHGAACENCPATH = os.path.join(os.getcwd(), 'tools', 'fhgaacenc.exe')
 
 # filetypes processing
-processFileTypes = ['.flac', '.ape', '.m4a', '.wv']
+PROCESSFILETYPES = ['.flac', '.ape', '.m4a', '.wv']
 
-# processing files lossless -> AAC from inputDirectory
-# temporary files and results are in outputDirectory
 def ProcessFolder(inputDirectory, outputDirectory):
-
-    # subprocess launch as separate function
+    """
+    processing files lossless -> AAC from inputDirectory.
+    temporary files and results are in outputDirectory
+    """
+    
     def Launch(cmd):
+        """
+        subprocess launch as separate function
+        """
 
         #PIPE = subprocess.PIPE
         p = Popen(cmd, shell=True)
@@ -38,11 +42,11 @@ def ProcessFolder(inputDirectory, outputDirectory):
     dirFileList = os.listdir(inputDirectory)
 
     # 0 - filename, 1 - extension
-    procFileList = list(filter (lambda fileName: 
-        os.path.splitext(fileName)[1] in processFileTypes, dirFileList))
+    procFileList = list(filter(lambda fileName: 
+        os.path.splitext(fileName)[1] in PROCESSFILETYPES, dirFileList))
 
 
-    # transcode  to WAV (ffmpeg) and encode to AAC (fhgaacenc)
+    # transcode  to WAV (ffmpeg) and encode to AAC(FHGAACENC)
     for procFile in procFileList:
 
         # get filename w/o extension
@@ -52,16 +56,16 @@ def ProcessFolder(inputDirectory, outputDirectory):
         inputFilePath = os.path.join(inputDirectory, procFile)
         outputFilePath = os.path.join(outputDirectory, procFileNoExt + '.wav')
         cmdKey = '-i ' + '"' + inputFilePath + '" "' + outputFilePath + '"'
-        cmd = ffmpegPath + ' ' + cmdKey 
+        cmd = FFMPEGPATH + ' ' + cmdKey 
 
         # transcode to wav - launch
         Launch(cmd)
 
-        # generate fhgaacenc command
-        inputFilePath = outputFilePath # ffmpeg out is fhgaacenc input
+        # generate FHGAACENC command
+        inputFilePath = outputFilePath # ffmpeg out is FHGAACENC input
         outputFilePath = os.path.join(outputDirectory, procFileNoExt + '.m4a')
-        cmdKey = aacParams + ' "' + inputFilePath + '" "' + outputFilePath + '"'    
-        cmd = fhgaacencPath + ' ' + cmdKey
+        cmdKey = AACPARAMS + ' "' + inputFilePath + '" "' + outputFilePath + '"'    
+        cmd = FHGAACENCPATH + ' ' + cmdKey
 
         # encode to aac - launch
         Launch(cmd)
@@ -70,46 +74,43 @@ def ProcessFolder(inputDirectory, outputDirectory):
         os.remove(inputFilePath)
 
 # folder selection dialog
-def SelectFolder (event, typeOfDir):
+def SelectFolder(event, typeOfDir):
 
     # options
     dialogOptions = {}
     dialogOptions['mustexist'] = True
     dialogOptions['parent'] = root
-    dialogOptions['initialdir'] = inputRoot
+    dialogOptions['initialdir'] = INPUTROOT
 
     # launch dialog
     selectedDir = filedialog.askdirectory(**dialogOptions)
 
-    # where to work
-    global inputRoot, outputRoot
-    
     if typeOfDir == 'in':
-        inputRoot = selectedDir
+        inputDirectory = selectedDir
     elif 'out':
-        outputRoot = selectedDir
+        outputDirectory = selectedDir
 
 # process function
-def Process (event):
+def Process(event, inputDirectory, outputDirectory):
     
     # directory tree walking
-    for basePath, watchingDir, filesInDir in os.walk(inputRoot):
+    for basePath, watchingDir, filesInDir in os.walk(inputDirectory):
         
         # subfolder files watching
         for fileInDir in filesInDir:
             
             # process subfolder if file with "right" extension exists
-            if os.path.splitext(fileInDir)[1] in processFileTypes:
+            if os.path.splitext(fileInDir)[1] in PROCESSFILETYPES:
 
                 # relative subfolder path generation
-                dirStruct = os.path.relpath(basePath, inputRoot)
+                dirStruct = os.path.relpath(basePath, inputDirectory)
 
                 # create dir structure in output folder
-                outputDirectory = os.path.join(outputRoot, dirStruct) 
-                os.makedirs(outputDirectory)
+                outputPath = os.path.join(outputDirectory, dirStruct) 
+                os.makedirs(outputPath)
 
                 # process folder
-                ProcessFolder(basePath, outputDirectory)
+                ProcessFolder(basePath, outputPath)
 
                 # don't continue to watch files in subfolder
                 break
@@ -127,17 +128,17 @@ test_frame.pack(side = 'left')
 # button for input selection
 buttonInputDir = Button(test_frame, text = 'Input dir')
 buttonInputDir.place(x = 10, y = 75, width = 100, height = 50)
-buttonInputDir.bind("<Button-1>", lambda event: SelectFolder(event,'in')) # 
+buttonInputDir.bind("<Button-1>", lambda event: SelectFolder(event,'in'))  
 
 # button for output selection
 buttonOutputDir = Button(test_frame, text = 'Output dir')
 buttonOutputDir.place(x = 120, y = 75, width = 100, height = 50)
-buttonOutputDir.bind("<Button-1>", lambda event: SelectFolder(event,'out')) # 
+buttonOutputDir.bind("<Button-1>", lambda event: SelectFolder(event,'out'))  
 
 # Launch button
 buttonProcess = Button(test_frame, text = 'Process')
 buttonProcess.place(x = 230, y = 75, width = 100, height = 50)
-buttonProcess.bind("<Button-1>", Process) # 
+buttonProcess.bind("<Button-1>", lambda event: Process(event,)) # 
 
 
 root.mainloop() # window
